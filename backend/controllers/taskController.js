@@ -39,7 +39,15 @@ const createTaskValidation = [
     .withMessage('Maximum budget must be greater than or equal to minimum budget'),
   body('deadline')
     .isISO8601()
-    .withMessage('Deadline must be a valid date'),
+    .withMessage('Deadline must be a valid date')
+    .custom((value) => {
+      const deadlineDate = new Date(value);
+      const now = new Date();
+      if (deadlineDate <= now) {
+        throw new Error('Deadline must be in the future');
+      }
+      return true;
+    }),
   body('location')
     .optional({ values: 'falsy' })
     .isString()

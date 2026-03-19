@@ -15,8 +15,8 @@ const placeBidValidation = [
     .isMongoId()
     .withMessage('Invalid task ID'),
   body('amount')
-    .isFloat({ min: 0 })
-    .withMessage('Bid amount must be a non-negative number'),
+    .isFloat({ min: 1 })
+    .withMessage('Bid amount must be greater than 0'),
   body('deliveryDays')
     .isInt({ min: 1 })
     .withMessage('Delivery days must be at least 1'),
@@ -31,8 +31,8 @@ const placeBidValidation = [
 const updateBidValidation = [
   body('amount')
     .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Bid amount must be a non-negative number'),
+    .isFloat({ min: 1 })
+    .withMessage('Bid amount must be greater than 0'),
   body('deliveryDays')
     .optional()
     .isInt({ min: 1 })

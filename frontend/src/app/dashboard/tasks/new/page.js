@@ -133,7 +133,16 @@ export default function NewTaskPage() {
         <div className="grid grid-2 gap-2">
           <div className="form-group">
             <label className="form-label">Deadline</label>
-            <input id="task-deadline" name="deadline" type="date" className="form-input" value={formData.deadline} onChange={handleChange} required />
+            <input 
+              id="task-deadline" 
+              name="deadline" 
+              type="date" 
+              className="form-input" 
+              value={formData.deadline} 
+              onChange={handleChange} 
+              min={new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+              required 
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Location (optional)</label>
