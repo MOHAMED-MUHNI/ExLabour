@@ -666,6 +666,26 @@ a:hover {
   margin-top: 4px;
 }
 
+.profile-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-badge:hover {
+  background: var(--primary);
+  color: white;
+}
+
 /* ========== STAT CARDS ========== */
 .stat-grid {
   display: grid;

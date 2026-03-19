@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
+import NotificationBell from './NotificationBell';
 import {
   FiZap, FiHome, FiPlus, FiList, FiUser, FiLogOut,
   FiShield, FiUsers, FiCheckSquare, FiBarChart2, FiFileText, FiBriefcase,
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }) {
     { href: '/dashboard', icon: <FiHome />, label: 'Dashboard' },
     { href: '/dashboard/tasks/new', icon: <FiPlus />, label: 'Post a Task' },
     { href: '/dashboard/my-tasks', icon: <FiList />, label: 'My Tasks' },
+    { href: '/dashboard/notifications', icon: <FiFileText />, label: 'Notifications' },
     { href: '/dashboard/profile', icon: <FiUser />, label: 'Profile' },
   ];
 
@@ -47,6 +49,7 @@ export default function DashboardLayout({ children }) {
     { href: '/tasks', icon: <FiBriefcase />, label: 'Browse Tasks' },
     { href: '/dashboard/my-bids', icon: <FiFileText />, label: 'My Bids' },
     { href: '/dashboard/assigned-tasks', icon: <FiCheckSquare />, label: 'Assigned Tasks' },
+    { href: '/dashboard/notifications', icon: <FiFileText />, label: 'Notifications' },
     { href: '/dashboard/profile', icon: <FiUser />, label: 'Profile' },
   ];
 
@@ -119,6 +122,25 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       <main className="dashboard-main">
+        <header className="dashboard-header">
+          <NotificationBell />
+          <Link href="/dashboard/profile" title="Profile">
+            <div className="profile-badge">
+              {user.profileImage ? (
+                <Image
+                  src={user.profileImage}
+                  alt={user.name}
+                  width={32}
+                  height={32}
+                  unoptimized
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                getInitials(user.name)
+              )}
+            </div>
+          </Link>
+        </header>
         {children}
       </main>
     </div>
