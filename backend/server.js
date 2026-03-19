@@ -42,6 +42,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/bids', require('./routes/bidRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 // Global error handler
 app.use((err, req, res, next) => {

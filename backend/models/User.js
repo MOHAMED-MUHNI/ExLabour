@@ -75,6 +75,17 @@ const userSchema = new mongoose.Schema({
       default: Date.now,
     },
   }],
+  averageRating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5,
+  },
+  totalReviews: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
 }, {
   timestamps: true,
 });
