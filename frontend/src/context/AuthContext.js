@@ -51,12 +51,22 @@ export function AuthProvider({ children }) {
   const register = async (formData) => {
     try {
       const res = await api.post('/auth/register', formData);
+      
+      // After registration, user needs to verify email before login
+      if (res.data.requiresEmailVerification) {
+        // Store email for verification pending page
+        localStorage.setItem('registration_email', res.data.email);
+        toast.success('Registration successful! Please check your email to verify your account.');
+        router.push(`/verify-email-pending?email=${encodeURIComponent(res.data.email)}`);
+        return res.data;
+      }
+      
+      // Fallback for legacy flow (if ever no email verification required)
       const { accessToken, user: newUser } = res.data;
       localStorage.setItem('exlabour_token', accessToken);
       localStorage.setItem('exlabour_user', JSON.stringify(newUser));
-      // Note: refreshToken is stored in HTTP-only cookie by server
       setUser(newUser);
-      toast.success('Registration successful! Awaiting admin verification.');
+      toast.success('Registration successful!');
       router.push('/dashboard');
       return res.data;
     } catch (error) {
@@ -84,6 +94,13 @@ export function AuthProvider({ children }) {
       }
       return res.data;
     } catch (error) {
+      // Check if error is due to unverified email
+      if (error.response?.data?.requiresEmailVerification) {
+        toast.error('Please verify your email before logging in');
+        router.push(`/verify-email-pending?email=${email}`);
+        throw error;
+      }
+      
       const msg = error.response?.data?.message || 'Login failed';
       toast.error(msg);
       throw error;
