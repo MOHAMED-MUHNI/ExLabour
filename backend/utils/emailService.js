@@ -4,38 +4,48 @@ const nodemailer = require('nodemailer');
  * Email Service for sending transactional emails
  */
 
-// Create transporter based on environment
-const createTransporter = () => {
-  if (process.env.NODE_ENV === 'production') {
-    // Production: Use real email service (SendGrid, AWS SES, etc.)
-    return nodemailer.createTransport({
+let transporter = null;
+
+// Initialize transporter
+const initializeTransporter = async () => {
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    // Production or configured SMTP
+    transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: true,
+      port: process.env.SMTP_PORT || 587,
+      secure: process.env.SMTP_PORT === 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
     });
+    console.log('✓ Email transporter configured with SMTP');
+  } else if (process.env.NODE_ENV === 'production') {
+    console.error('❌ Production environment but no SMTP credentials configured!');
   } else {
-    // Development: Use Ethereal (free test email service)
-    // Or Mailtrap if credentials provided
-    if (process.env.SMTP_HOST) {
-      return nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
+    // Development: Create Ethereal test account
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: testAccount.user,
+          pass: testAccount.pass,
         },
       });
+      console.log('✓ Email transporter configured with Ethereal (development)');
+      console.log('📧 Ethereal Test Account:', testAccount.user);
+    } catch (error) {
+      console.error('❌ Failed to create Ethereal account:', error.message);
+      transporter = null;
     }
-    // Fallback: Create Ethereal test account
-    return null;
   }
 };
 
-const transporter = createTransporter();
+// Initialize transporter on module load
+initializeTransporter().catch(console.error);
 
 /**
  * Send email verification email
@@ -112,15 +122,23 @@ const sendVerificationEmail = async (email, token, userName) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Verification email sent:', info.response);
+    console.log('✓ Verification email sent:', info.response);
+    
+    // Log Ethereal preview URL for development
+    if (process.env.NODE_ENV !== 'production' && nodemailer.getTestMessageUrl(info)) {
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      console.log('📧 Email Preview URL:', previewUrl);
+      console.log('🔗 Verification Link:', verificationUrl);
+    }
 
     return {
       success: true,
       message: 'Verification email sent successfully',
       messageId: info.messageId,
+      previewUrl: process.env.NODE_ENV !== 'production' ? nodemailer.getTestMessageUrl(info) : null,
     };
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error('❌ Error sending verification email:', error);
     return {
       success: false,
       message: 'Failed to send verification email',
@@ -200,7 +218,12 @@ const sendWelcomeEmail = async (email, userName) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Welcome email sent:', info.response);
+    console.log('✓ Welcome email sent:', info.response);
+    
+    // Log Ethereal preview URL for development
+    if (process.env.NODE_ENV !== 'production' && nodemailer.getTestMessageUrl(info)) {
+      console.log('📧 Email Preview URL:', nodemailer.getTestMessageUrl(info));
+    }
 
     return {
       success: true,
@@ -208,7 +231,7 @@ const sendWelcomeEmail = async (email, userName) => {
       messageId: info.messageId,
     };
   } catch (error) {
-    console.error('Error sending welcome email:', error);
+    console.error('❌ Error sending welcome email:', error);
     return {
       success: false,
       message: 'Failed to send welcome email',
