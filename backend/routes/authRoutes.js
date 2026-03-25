@@ -7,6 +7,8 @@ const {
   login,
   refreshTokenFn,
   logout,
+  verifyEmail,
+  resendVerificationEmail,
   getMe,
   updateProfile,
   registerValidation,
@@ -17,6 +19,8 @@ router.post('/register', registerLimiter, registerValidation, register);
 router.post('/login', loginLimiter, loginValidation, login);
 router.post('/refresh', refreshTokenFn);
 router.post('/logout', logout);
+router.post('/verify-email', verifyEmail);
+router.post('/resend-verification-email', resendVerificationEmail);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 
