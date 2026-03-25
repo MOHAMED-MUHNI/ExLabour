@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../login/page.module.css';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -55,9 +54,9 @@ export default function VerifyEmailPending() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.formContainer}>
-        <h1>Verify Your Email</h1>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '20px' }}>
+      <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)', padding: '40px', maxWidth: '480px', width: '100%' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>Verify Your Email</h1>
         
         <div style={{
           background: '#e3f2fd',
@@ -104,10 +103,16 @@ export default function VerifyEmailPending() {
           <button
             onClick={handleResendEmail}
             disabled={resending}
-            className={styles.button}
             style={{
               background: resending ? '#ccc' : '#3498db',
               cursor: resending ? 'not-allowed' : 'pointer',
+              color: 'white',
+              padding: '12px 20px',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '1rem',
+              width: '100%',
+              fontWeight: '500',
             }}
           >
             {resending ? 'Sending...' : 'Resend Verification Email'}
@@ -139,7 +144,7 @@ export default function VerifyEmailPending() {
           
           <p style={{ opacity: 0.7 }}>
             Wrong email?{' '}
-            <Link href="/register" className={styles.link}>
+            <Link href="/register" style={{ color: '#0066cc', textDecoration: 'none' }}>
               Register again
             </Link>
           </p>

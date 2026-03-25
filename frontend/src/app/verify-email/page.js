@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../login/page.module.css';
 import api from '@/lib/api';
 
 export default function VerifyEmail() {
@@ -93,20 +92,20 @@ export default function VerifyEmail() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.formContainer}>
-        <h1>Email Verification</h1>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '20px' }}>
+      <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)', padding: '40px', maxWidth: '400px', width: '100%' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>Email Verification</h1>
 
         {loading && (
-          <div className={styles.message}>
+          <div style={{ textAlign: 'center', padding: '20px', borderRadius: '4px', margin: '20px 0', background: '#f0f0f0', color: '#666' }}>
             <p>Verifying your email...</p>
-            <div className={styles.spinner}></div>
+            <div style={{ border: '3px solid #f3f3f3', borderTop: '3px solid #3498db', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 1s linear infinite', margin: '20px auto' }}></div>
           </div>
         )}
 
         {!loading && status === 'success' && (
-          <div className={`${styles.message} ${styles.success}`}>
-            <div className={styles.successIcon}>✓</div>
+          <div style={{ textAlign: 'center', padding: '20px', borderRadius: '4px', margin: '20px 0', background: '#d4edda', color: '#155724', border: '1px solid #c3e6cb' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>✓</div>
             <p>{message}</p>
             <p style={{ marginTop: '10px', fontSize: '0.9rem', opacity: 0.8 }}>
               Redirecting to login page...
@@ -115,8 +114,8 @@ export default function VerifyEmail() {
         )}
 
         {!loading && status === 'error' && (
-          <div className={`${styles.message} ${styles.error}`}>
-            <div className={styles.errorIcon}>✕</div>
+          <div style={{ textAlign: 'center', padding: '20px', borderRadius: '4px', margin: '20px 0', background: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>✕</div>
             <p>{message}</p>
             
             {showResend && (
@@ -124,8 +123,7 @@ export default function VerifyEmail() {
                 <button
                   onClick={handleResendVerification}
                   disabled={resending}
-                  className={styles.button}
-                  style={{ marginTop: '10px' }}
+                  style={{ backgroundColor: resending ? '#999' : '#3498db', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: resending ? 'not-allowed' : 'pointer', fontSize: '1rem', width: '100%', marginTop: '10px' }}
                 >
                   {resending ? 'Sending...' : 'Resend Verification Email'}
                 </button>
@@ -135,7 +133,7 @@ export default function VerifyEmail() {
             <div style={{ marginTop: '20px', fontSize: '0.9rem' }}>
               <p>
                 Already verified?{' '}
-                <Link href="/login" className={styles.link}>
+                <Link href="/login" style={{ color: '#0066cc', textDecoration: 'none' }}>
                   Go to login
                 </Link>
               </p>
