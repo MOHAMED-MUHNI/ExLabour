@@ -51,9 +51,10 @@ export function AuthProvider({ children }) {
   const register = async (formData) => {
     try {
       const res = await api.post('/auth/register', formData);
-      const { token, user: newUser } = res.data;
-      localStorage.setItem('exlabour_token', token);
+      const { accessToken, user: newUser } = res.data;
+      localStorage.setItem('exlabour_token', accessToken);
       localStorage.setItem('exlabour_user', JSON.stringify(newUser));
+      // Note: refreshToken is stored in HTTP-only cookie by server
       setUser(newUser);
       toast.success('Registration successful! Awaiting admin verification.');
       router.push('/dashboard');
@@ -68,9 +69,10 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { token, user: loggedInUser } = res.data;
-      localStorage.setItem('exlabour_token', token);
+      const { accessToken, user: loggedInUser } = res.data;
+      localStorage.setItem('exlabour_token', accessToken);
       localStorage.setItem('exlabour_user', JSON.stringify(loggedInUser));
+      // Note: refreshToken is stored in HTTP-only cookie by server
       setUser(loggedInUser);
       toast.success('Welcome back!');
 
@@ -88,12 +90,19 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('exlabour_token');
-    localStorage.removeItem('exlabour_user');
-    setUser(null);
-    toast.success('Logged out');
-    router.push('/login');
+  const logout = async () => {
+    try {
+      // Call logout endpoint to clear refresh token on server
+      await api.post('/auth/logout').catch(() => {}); // Ignore errors
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('exlabour_token');
+      localStorage.removeItem('exlabour_user');
+      setUser(null);
+      toast.success('Logged out');
+      router.push('/login');
+    }
   };
 
   const updateUser = (updatedUser) => {

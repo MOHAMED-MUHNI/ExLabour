@@ -5,7 +5,22 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Include cookies (for refresh token)
 });
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 // Request interceptor — attach JWT token
 api.interceptors.request.use(
@@ -21,20 +36,67 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — handle errors
+// Response interceptor — handle 401 and refresh token
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('exlabour_token');
-        localStorage.removeItem('exlabour_user');
-        // Only redirect if not already on login page
-        if (!window.location.pathname.includes('/login')) {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch(() => {
+            // Logout user if queue fails
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('exlabour_token');
+              localStorage.removeItem('exlabour_user');
+              window.location.href = '/login';
+            }
+            return Promise.reject(error);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem('exlabour_refresh_token');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const response = await api.post('/auth/refresh', { refreshToken });
+        const { accessToken } = response.data;
+
+        localStorage.setItem('exlabour_token', accessToken);
+        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+        processQueue(null, accessToken);
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+
+        // Logout user
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('exlabour_token');
+          localStorage.removeItem('exlabour_refresh_token');
+          localStorage.removeItem('exlabour_user');
           window.location.href = '/login';
         }
+
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );

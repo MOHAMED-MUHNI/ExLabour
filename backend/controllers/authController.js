@@ -1,5 +1,6 @@
 const User = require('../models/User');
-const generateToken = require('../utils/generateToken');
+const RefreshToken = require('../models/RefreshToken');
+const { generateAccessToken, generateTokens } = require('../utils/generateToken');
 const { body, validationResult } = require('express-validator');
 
 // Validation rules
@@ -44,12 +45,21 @@ const register = async (req, res, next) => {
       location,
     });
 
-    const token = generateToken(user._id);
+    // Generate tokens
+    const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    // Set refresh token in HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.status(201).json({
       success: true,
       message: 'Registration successful. Please wait for admin verification.',
-      token,
+      accessToken,
       user,
     });
   } catch (error) {
@@ -85,14 +95,82 @@ const login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    const token = generateToken(user._id);
+    // Generate tokens
+    const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    // Set refresh token in HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.json({
       success: true,
       message: 'Login successful',
-      token,
+      accessToken,
       user,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh
+const refreshTokenFn = async (req, res, next) => {
+  try {
+    const { refreshToken: token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Refresh token is required' });
+    }
+
+    // Verify refresh token exists in database
+    const storedToken = await RefreshToken.findOne({ token });
+    if (!storedToken) {
+      return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+    }
+
+    // Check if token is expired
+    if (new Date() > storedToken.expiresAt) {
+      await RefreshToken.deleteOne({ _id: storedToken._id });
+      return res.status(401).json({ success: false, message: 'Refresh token has expired' });
+    }
+
+    // Verify user still exists and is active
+    const user = await User.findById(storedToken.userId);
+    if (!user || !user.isActive) {
+      await RefreshToken.deleteOne({ _id: storedToken._id });
+      return res.status(401).json({ success: false, message: 'User account is not available' });
+    }
+
+    // Generate new access token
+    const newAccessToken = generateAccessToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Token refreshed',
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Logout user (clear refresh token)
+// @route   POST /api/auth/logout
+const logout = async (req, res, next) => {
+  try {
+    const { refreshToken: token } = req.body;
+
+    if (token) {
+      await RefreshToken.deleteOne({ token });
+    }
+
+    res.clearCookie('refreshToken');
+    res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     next(error);
   }
@@ -136,6 +214,8 @@ const updateProfile = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  refreshTokenFn,
+  logout,
   getMe,
   updateProfile,
   registerValidation,
