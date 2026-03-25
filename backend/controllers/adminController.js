@@ -2,6 +2,7 @@ const User = require('../models/User');
 const VerificationLog = require('../models/VerificationLog');
 const Task = require('../models/Task');
 const Bid = require('../models/Bid');
+const NotificationService = require('../utils/notificationService');
 
 // @desc    Get pending users/taskers for verification
 // @route   GET /api/admin/pending
@@ -52,6 +53,13 @@ const verifyUser = async (req, res, next) => {
       decision: 'verified',
       remarks: req.body.remarks || '',
     });
+
+    // Notify user about verification
+    try {
+      await NotificationService.notifyUserVerified(user._id);
+    } catch (notifError) {
+      console.error('Error sending verification notification:', notifError);
+    }
 
     res.json({ success: true, message: `${user.name} has been verified`, user });
   } catch (error) {

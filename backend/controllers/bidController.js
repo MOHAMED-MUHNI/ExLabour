@@ -1,5 +1,6 @@
 const Bid = require('../models/Bid');
 const Task = require('../models/Task');
+const NotificationService = require('../utils/notificationService');
 const { body, param, validationResult } = require('express-validator');
 
 const bidIdValidation = [
@@ -97,6 +98,13 @@ const placeBid = async (req, res, next) => {
 
     // Increment bid count on task
     await Task.findByIdAndUpdate(taskId, { $inc: { bidCount: 1 } });
+
+    // Notify task owner about new bid
+    try {
+      await NotificationService.notifyBidPlaced(task.userId, req.user._id, taskId, amount);
+    } catch (notifError) {
+      console.error('Error sending bid placed notification:', notifError);
+    }
 
     res.status(201).json({ success: true, message: 'Bid placed successfully', bid });
   } catch (error) {
@@ -256,6 +264,7 @@ const acceptBid = async (req, res, next) => {
     await bid.save();
 
     // Reject all other pending bids for this task
+    const rejectedBids = await Bid.find({ taskId: task._id, _id: { $ne: bid._id }, bidStatus: 'pending' });
     await Bid.updateMany(
       { taskId: task._id, _id: { $ne: bid._id }, bidStatus: 'pending' },
       { bidStatus: 'rejected' }
@@ -266,6 +275,16 @@ const acceptBid = async (req, res, next) => {
     task.assignedBidId = bid._id;
     task.taskStatus = 'assigned';
     await task.save();
+
+    // Notify accepted bidder and rejected bidders
+    try {
+      await NotificationService.notifyBidAccepted(bid.taskerId, taskId);
+      for (const rejectedBid of rejectedBids) {
+        await NotificationService.notifyBidRejected(rejectedBid.taskerId, taskId);
+      }
+    } catch (notifError) {
+      console.error('Error sending bid acceptance notifications:', notifError);
+    }
 
     res.json({
       success: true,
@@ -334,6 +353,13 @@ const markCompleted = async (req, res, next) => {
 
     task.taskStatus = 'completed';
     await task.save();
+
+    // Notify task owner about completion
+    try {
+      await NotificationService.notifyTaskCompleted(task.userId, task.assignedTaskerId, req.params.taskId);
+    } catch (notifError) {
+      console.error('Error sending task completed notification:', notifError);
+    }
 
     res.json({ success: true, message: 'Task marked as completed', task });
   } catch (error) {

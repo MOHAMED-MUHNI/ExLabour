@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const Task = require('../models/Task');
 const User = require('../models/User');
+const NotificationService = require('../utils/notificationService');
 const { body, param, validationResult } = require('express-validator');
 
 // Validation rules
@@ -92,6 +93,13 @@ const createReview = async (req, res, next) => {
         totalReviews: reviews.length,
       },
     });
+
+    // Notify user about new review
+    try {
+      await NotificationService.notifyReviewReceived(targetUserId, reviewerId, rating, taskId);
+    } catch (notifError) {
+      console.error('Error sending review notification:', notifError);
+    }
 
     // Populate and return
     await review.populate('reviewerId', 'name profileImage');

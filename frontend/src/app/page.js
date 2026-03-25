@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +8,11 @@ import { FiZap, FiShield, FiUsers, FiCheckCircle, FiArrowRight } from 'react-ico
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -16,7 +22,7 @@ export default function HomePage() {
           <FiZap /> <span>ExLabour</span>
         </Link>
         <ul className="navbar-links">
-          {user ? (
+          {mounted && user ? (
             <li>
               <Link href={user.role === 'admin' ? '/admin' : '/dashboard'}>
                 <button className="btn btn-primary btn-sm">Dashboard</button>

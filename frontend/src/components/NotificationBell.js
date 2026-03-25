@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Bell, X, CheckCheck, Trash2 } from 'react-feather';
+import { Bell, X, Check, Trash2 } from 'react-feather';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 import styles from './NotificationBell.module.css';
 
 export default function NotificationBell() {
@@ -15,7 +15,7 @@ export default function NotificationBell() {
   // Fetch unread count
   const fetchUnreadCount = async () => {
     try {
-      const { data } = await axios.get('/api/notifications/unread/count');
+      const { data } = await api.get('/notifications/unread/count');
       setUnreadCount(data.unreadCount);
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -26,7 +26,7 @@ export default function NotificationBell() {
   const fetchNotifications = async (pageNum = 1) => {
     setLoading(true);
     try {
-      const { data } = await axios.get('/api/notifications', {
+      const { data } = await api.get('/notifications', {
         params: { page: pageNum, limit: 5 },
       });
       
@@ -56,7 +56,7 @@ export default function NotificationBell() {
   const handleMarkAsRead = async (notificationId, e) => {
     e.stopPropagation();
     try {
-      await axios.put(`/api/notifications/${notificationId}/read`);
+      await api.put(`/notifications/${notificationId}/read`);
       setNotifications(prev =>
         prev.map(n => (n._id === notificationId ? { ...n, isRead: true } : n))
       );
@@ -69,7 +69,7 @@ export default function NotificationBell() {
   // Mark all as read
   const handleMarkAllAsRead = async () => {
     try {
-      await axios.put('/api/notifications/read/all');
+      await api.put('/notifications/read/all');
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
       toast.success('All notifications marked as read');
@@ -82,7 +82,7 @@ export default function NotificationBell() {
   const handleDelete = async (notificationId, e) => {
     e.stopPropagation();
     try {
-      await axios.delete(`/api/notifications/${notificationId}`);
+      await api.delete(`/notifications/${notificationId}`);
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       toast.success('Notification deleted');
     } catch (error) {
@@ -155,7 +155,7 @@ export default function NotificationBell() {
                 className={styles.markAllBtn}
                 onClick={handleMarkAllAsRead}
               >
-                <CheckCheck size={14} /> Mark all as read
+                <Check size={14} /> Mark all as read
               </button>
             </div>
           )}
@@ -186,7 +186,7 @@ export default function NotificationBell() {
                           onClick={e => handleMarkAsRead(notification._id, e)}
                           title="Mark as read"
                         >
-                          <CheckCheck size={16} />
+                          <Check size={16} />
                         </button>
                       )}
                       <button
