@@ -55,7 +55,7 @@ export default function ProfilePage() {
       updateUser({ ...user, profileImage: res.data.data.url });
       toast.success('Profile image updated!');
     } catch (error) {
-      toast.error('Upload failed. Check your S3 configuration.');
+      toast.error('Upload failed. Check your Cloudinary configuration.');
     } finally {
       setUploading(false);
     }
@@ -84,9 +84,64 @@ export default function ProfilePage() {
 
   const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 
+  // Profile strength calculation
+  const getProfileStrength = () => {
+    const fields = [
+      { label: 'Name', filled: !!user?.name },
+      { label: 'Email', filled: !!user?.email },
+      { label: 'Phone', filled: !!user?.phone },
+      { label: 'Location', filled: !!user?.location },
+      { label: 'Profile Photo', filled: !!user?.profileImage },
+      ...(user?.role === 'tasker' ? [
+        { label: 'Bio', filled: !!(user?.bio && user.bio.length > 10) },
+        { label: 'Skills', filled: !!(user?.skills && user.skills.length > 0) },
+        { label: 'Verification Docs', filled: !!(user?.verificationDocuments && user.verificationDocuments.length > 0) },
+      ] : [
+        { label: 'Bio', filled: !!(user?.bio && user.bio.length > 10) },
+      ]),
+    ];
+    const filled = fields.filter((f) => f.filled).length;
+    const pct = Math.round((filled / fields.length) * 100);
+    return { pct, fields, filled, total: fields.length };
+  };
+  const strength = getProfileStrength();
+  const strengthColor = strength.pct >= 80 ? '#10b981' : strength.pct >= 50 ? '#f59e0b' : '#ef4444';
+  const strengthLabel = strength.pct >= 80 ? 'Strong' : strength.pct >= 50 ? 'Good' : 'Needs Work';
+
   return (
     <div className="profile-page">
       <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '24px' }}>My Profile</h1>
+
+      {/* Profile Strength Indicator */}
+      <div className="card" style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>Profile Strength</h3>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: strengthColor }}>
+            {strengthLabel} — {strength.pct}%
+          </span>
+        </div>
+        <div style={{ background: 'var(--bg-tertiary)', borderRadius: '99px', height: '8px', overflow: 'hidden' }}>
+          <div style={{
+            width: `${strength.pct}%`,
+            height: '100%',
+            background: strengthColor,
+            borderRadius: '99px',
+            transition: 'width 0.6s ease',
+          }} />
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px' }}>
+          {strength.fields.map((f) => (
+            <span key={f.label} style={{
+              fontSize: '0.75rem', padding: '3px 10px', borderRadius: '20px',
+              background: f.filled ? '#10b98122' : 'var(--bg-tertiary)',
+              color: f.filled ? '#10b981' : 'var(--text-secondary)',
+              border: `1px solid ${f.filled ? '#10b98144' : 'var(--border-color)'}`,
+            }}>
+              {f.filled ? '✓' : '○'} {f.label}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* Avatar section */}
       <div className="profile-avatar-section">

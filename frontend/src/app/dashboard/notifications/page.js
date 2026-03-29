@@ -1,8 +1,10 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Trash2 } from 'react-feather';
-import styles from './NotificationsPage.module.css';
+import styles from './page.module.css';
 
 const notificationTypeIcons = {
   bid_placed: '💰',

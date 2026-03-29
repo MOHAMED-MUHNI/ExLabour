@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-const { upload, uploadToS3 } = require('../middleware/upload');
+const { upload, uploadToCloudinary } = require('../middleware/upload');
 const User = require('../models/User');
 
 // @desc    Upload profile image
@@ -15,7 +15,7 @@ router.post('/profile-image', protect, (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please upload an image' });
     }
 
-    const result = await uploadToS3(req.file, 'profiles');
+    const result = await uploadToCloudinary(req.file, 'profiles');
 
     // Update user's profile image
     await User.findByIdAndUpdate(req.user._id, { profileImage: result.url });
@@ -38,7 +38,7 @@ router.post('/task-attachment', protect, upload.single('file'), async (req, res,
       return res.status(400).json({ success: false, message: 'Please upload a file' });
     }
 
-    const result = await uploadToS3(req.file, 'attachments');
+    const result = await uploadToCloudinary(req.file, 'attachments');
 
     res.json({
       success: true,
@@ -70,7 +70,7 @@ router.post('/verification-document', protect, authorize('tasker'), (req, res, n
       return res.status(400).json({ success: false, message: 'Maximum 5 verification documents allowed' });
     }
 
-    const result = await uploadToS3(req.file, 'verification-docs');
+    const result = await uploadToCloudinary(req.file, 'verification-docs');
 
     user.verificationDocuments.push({
       url: result.url,

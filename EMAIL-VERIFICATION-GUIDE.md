@@ -9,6 +9,7 @@ Email verification is now integrated into the ExLabour platform as a critical se
 ### Backend Components
 
 #### 1. Utility: `backend/utils/emailToken.js`
+
 Handles generation and validation of email verification tokens.
 
 ```javascript
@@ -20,11 +21,13 @@ const { valid, message } = verifyEmailToken(tokenValue, expiresAtDate);
 ```
 
 **Token Properties:**
+
 - **Format:** Random hexadecimal string (64 characters)
 - **Validity:** 24 hours from generation
 - **Usage:** One-time use (cleared after email verification)
 
 #### 2. Utility: `backend/utils/emailService.js`
+
 Handles transactional email delivery using nodemailer.
 
 ```javascript
@@ -36,6 +39,7 @@ await sendWelcomeEmail(email, userName);
 ```
 
 **Features:**
+
 - Production/development environment detection
 - Ethereal for development (temporary email testing)
 - SMTP support for production
@@ -43,6 +47,7 @@ await sendWelcomeEmail(email, userName);
 - Styled verification links with 24-hour countdown
 
 #### 3. Model Update: `backend/models/User.js`
+
 Added three fields for email verification tracking:
 
 ```javascript
@@ -52,19 +57,23 @@ emailVerificationExpires: { type: Date, default: null },
 ```
 
 #### 4. Controller: `backend/controllers/authController.js`
+
 Updated with new email verification endpoints and logic.
 
 **Register Function:**
+
 - Generates email verification token
 - Sends verification email
 - Returns `requiresEmailVerification: true`
 - User cannot log in until email is verified
 
 **Login Function:**
+
 - Checks if `emailVerified === true` before allowing login
 - Returns `requiresEmailVerification: true` if email not verified
 
 **New: `verifyEmail()` Function:**
+
 - Accepts verification token
 - Validates token and expiration
 - Marks user's email as verified
@@ -72,6 +81,7 @@ Updated with new email verification endpoints and logic.
 - Clears verification token fields
 
 **New: `resendVerificationEmail()` Function:**
+
 - Accepts user's email
 - Regenerates new verification token
 - Resends verification email
@@ -80,9 +90,11 @@ Updated with new email verification endpoints and logic.
 ### Frontend Components
 
 #### 1. Page: `frontend/src/app/verify-email/page.js`
+
 Confirmation page that user visits via email link.
 
 **Flow:**
+
 1. Extract verification token from URL (`?token=xxx`)
 2. Display "Verifying..." state
 3. Call POST `/api/auth/verify-email` with token
@@ -91,15 +103,18 @@ Confirmation page that user visits via email link.
 6. Offer resend option if token expired
 
 **Features:**
+
 - Loading spinner during verification
 - Color-coded success/error messages
 - Error recovery with resend functionality
 - Auto-redirect after 3 seconds
 
 #### 2. Page: `frontend/src/app/verify-email-pending/page.js`
+
 Page displayed immediately after registration.
 
 **Flow:**
+
 1. Shows user's registered email
 2. Explains verification process
 3. Offers "Resend Verification Email" button
@@ -107,6 +122,7 @@ Page displayed immediately after registration.
 5. Allows navigation to login when ready
 
 **Features:**
+
 - Visual email reminder
 - Step-by-step instructions
 - Resend button with loading state
@@ -114,14 +130,17 @@ Page displayed immediately after registration.
 - Link to register again if wrong email
 
 #### 3. Context: `frontend/src/context/AuthContext.js`
+
 Updated authentication logic to handle email verification.
 
 **Register Function:**
+
 - Stores registration email in localStorage
 - Redirect to `verify-email-pending?email=xxx`
 - Shows success toast message
 
 **Login Function:**
+
 - Detects `requiresEmailVerification` error response
 - Redirects to `verify-email-pending?email=xxx`
 - Shows error toast message
@@ -131,9 +150,11 @@ Updated authentication logic to handle email verification.
 ### Public Endpoints (No Authentication Required)
 
 #### POST `/api/auth/register`
+
 Register new user and initiate email verification.
 
 **Request:**
+
 ```json
 {
   "name": "John Doe",
@@ -148,6 +169,7 @@ Register new user and initiate email verification.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -158,9 +180,11 @@ Register new user and initiate email verification.
 ```
 
 #### POST `/api/auth/verify-email`
+
 Verify user's email with verification token.
 
 **Request:**
+
 ```json
 {
   "token": "hex_token_from_email_link"
@@ -168,6 +192,7 @@ Verify user's email with verification token.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -177,6 +202,7 @@ Verify user's email with verification token.
 ```
 
 **Response (Error - Token Expired):**
+
 ```json
 {
   "success": false,
@@ -185,9 +211,11 @@ Verify user's email with verification token.
 ```
 
 #### POST `/api/auth/resend-verification-email`
+
 Resend verification email with new token.
 
 **Request:**
+
 ```json
 {
   "email": "john@example.com"
@@ -195,6 +223,7 @@ Resend verification email with new token.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -203,9 +232,11 @@ Resend verification email with new token.
 ```
 
 #### POST `/api/auth/login`
+
 Login user (requires email verification).
 
 **Request:**
+
 ```json
 {
   "email": "john@example.com",
@@ -214,16 +245,20 @@ Login user (requires email verification).
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
   "message": "Login successful",
   "accessToken": "jwt_token",
-  "user": { /* user object */ }
+  "user": {
+    /* user object */
+  }
 }
 ```
 
 **Response (Error - Email Not Verified):**
+
 ```json
 {
   "success": false,
@@ -341,6 +376,7 @@ Login user (requires email verification).
 ### Environment Variables
 
 **Required:**
+
 ```env
 # Client URL for verification link
 CLIENT_URL=http://localhost:3000
@@ -353,6 +389,7 @@ SENDER_EMAIL=noreply@exlabour.local
 Automatically uses Ethereal for testing. No configuration needed.
 
 **Production (SMTP):**
+
 ```env
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -369,6 +406,7 @@ SMTP_PASS=your-app-password
 ### Manual Testing Steps
 
 1. **Register a new account:**
+
    ```bash
    POST http://localhost:5000/api/auth/register
    {
@@ -388,6 +426,7 @@ SMTP_PASS=your-app-password
    - Or manually call verify-email endpoint with token
 
 4. **Test login without verification:**
+
    ```bash
    POST http://localhost:5000/api/auth/login
    {
@@ -395,9 +434,11 @@ SMTP_PASS=your-app-password
      "password": "Test@123"
    }
    ```
+
    Expected: 403 error with `requiresEmailVerification: true`
 
 5. **Verify email:**
+
    ```bash
    POST http://localhost:5000/api/auth/verify-email
    {
@@ -438,20 +479,21 @@ SMTP_PASS=your-app-password
 ## Rate Limiting
 
 The following endpoints should have rate limiting added (optional):
+
 - `/api/auth/resend-verification-email` - 3 attempts per hour per email
 - `/api/auth/register` - Already limited via registerLimiter middleware
 
 ## Error Handling
 
-| Error | Status | Message | Action |
-|-------|--------|---------|--------|
-| Token missing | 400 | "Verification token is required" | Show form to enter token |
-| Token invalid | 400 | "Invalid verification token" | Offer resend |
-| Token expired | 400 | "Verification token has expired" | Offer resend |
-| Email not verified | 403 | "Please verify your email before logging in" | Redirect to verify-email-pending |
-| Email already verified | 400 | "Email is already verified" | Redirect to login |
-| User not found | 404 | "User not found" | Redirect to register |
-| Email sending failed | 500 | "Failed to send verification email" | Show error with retry option |
+| Error                  | Status | Message                                      | Action                           |
+| ---------------------- | ------ | -------------------------------------------- | -------------------------------- |
+| Token missing          | 400    | "Verification token is required"             | Show form to enter token         |
+| Token invalid          | 400    | "Invalid verification token"                 | Offer resend                     |
+| Token expired          | 400    | "Verification token has expired"             | Offer resend                     |
+| Email not verified     | 403    | "Please verify your email before logging in" | Redirect to verify-email-pending |
+| Email already verified | 400    | "Email is already verified"                  | Redirect to login                |
+| User not found         | 404    | "User not found"                             | Redirect to register             |
+| Email sending failed   | 500    | "Failed to send verification email"          | Show error with retry option     |
 
 ## Future Enhancements
 
@@ -467,6 +509,7 @@ The following endpoints should have rate limiting added (optional):
 ## Monitoring
 
 Monitor these metrics in production:
+
 - Email delivery success rate
 - Verification completion rate
 - Token expiration rate
@@ -476,6 +519,7 @@ Monitor these metrics in production:
 ## Support
 
 For issues or questions about email verification:
+
 1. Check `.env` for proper configuration
 2. Verify MongoDB connection
 3. Check email service logs

@@ -1,6 +1,6 @@
 const Task = require('../models/Task');
 const Bid = require('../models/Bid');
-const { deleteFromS3 } = require('../middleware/upload');
+const { deleteFromCloudinary } = require('../middleware/upload');
 const { body, param, validationResult } = require('express-validator');
 
 const TASK_CATEGORIES = [
@@ -389,7 +389,7 @@ const deleteTask = async (req, res, next) => {
     }
 
     if (Array.isArray(task.attachments) && task.attachments.length > 0) {
-      await Promise.all(task.attachments.map((attachment) => deleteFromS3(attachment.key)));
+      await Promise.all(task.attachments.map((attachment) => deleteFromCloudinary(attachment.key)));
     }
 
     // Delete associated bids

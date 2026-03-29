@@ -1,10 +1,9 @@
 const multer = require('multer');
-const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const s3Client = require('../config/s3');
+const cloudinary = require('../config/cloudinary');
 const path = require('path');
-const crypto = require('crypto');
+const { Readable } = require('stream');
 
-// Multer memory storage (files stored in buffer, then sent to S3)
+// Multer memory storage (files buffered, then uploaded to Cloudinary)
 const storage = multer.memoryStorage();
 
 // File filter
@@ -36,40 +35,44 @@ const upload = multer({
   },
 });
 
-// Upload file to S3
-const uploadToS3 = async (file, folder = 'general') => {
-  const fileExtension = path.extname(file.originalname);
-  const uniqueName = `${folder}/${crypto.randomUUID()}${fileExtension}`;
+// Upload file to Cloudinary
+const uploadToCloudinary = (file, folder = 'general') => {
+  return new Promise((resolve, reject) => {
+    const resourceType = file.mimetype === 'application/pdf' ? 'raw' : 'image';
 
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: uniqueName,
-    Body: file.buffer,
-    ContentType: file.mimetype,
-  };
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: resourceType,
+        use_filename: false,
+        unique_filename: true,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve({
+          url: result.secure_url,
+          key: result.public_id,   // public_id acts as the key for deletion
+          originalName: file.originalname,
+        });
+      }
+    );
 
-  await s3Client.send(new PutObjectCommand(params));
-
-  // Construct the URL
-  const url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueName}`;
-
-  return { url, key: uniqueName, originalName: file.originalname };
+    // Convert buffer to stream and pipe
+    const readable = new Readable();
+    readable.push(file.buffer);
+    readable.push(null);
+    readable.pipe(uploadStream);
+  });
 };
 
-// Delete file from S3
-const deleteFromS3 = async (key) => {
-  if (!key) return;
-  
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-  };
-
+// Delete file from Cloudinary
+const deleteFromCloudinary = async (publicId) => {
+  if (!publicId) return;
   try {
-    await s3Client.send(new DeleteObjectCommand(params));
+    await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    console.error('S3 delete error:', error.message);
+    console.error('Cloudinary delete error:', error.message);
   }
 };
 
-module.exports = { upload, uploadToS3, deleteFromS3 };
+module.exports = { upload, uploadToCloudinary, deleteFromCloudinary };

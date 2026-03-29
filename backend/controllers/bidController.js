@@ -278,9 +278,9 @@ const acceptBid = async (req, res, next) => {
 
     // Notify accepted bidder and rejected bidders
     try {
-      await NotificationService.notifyBidAccepted(bid.taskerId, taskId);
+      await NotificationService.notifyBidAccepted(bid.taskerId, task._id);
       for (const rejectedBid of rejectedBids) {
-        await NotificationService.notifyBidRejected(rejectedBid.taskerId, taskId);
+        await NotificationService.notifyBidRejected(rejectedBid.taskerId, task._id);
       }
     } catch (notifError) {
       console.error('Error sending bid acceptance notifications:', notifError);

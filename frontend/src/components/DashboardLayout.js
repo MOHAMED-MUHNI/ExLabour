@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import NotificationBell from './NotificationBell';
 import {
   FiZap, FiHome, FiPlus, FiList, FiUser, FiLogOut,
-  FiShield, FiUsers, FiCheckSquare, FiBarChart2, FiFileText, FiBriefcase,
+  FiShield, FiUsers, FiCheckSquare, FiBarChart2, FiFileText, FiBriefcase, FiBell, FiAlertTriangle,
 } from 'react-icons/fi';
 
 export default function DashboardLayout({ children }) {
@@ -36,11 +36,19 @@ export default function DashboardLayout({ children }) {
   const isAdmin = user.role === 'admin';
   const isTasker = user.role === 'tasker';
 
+  const adminLinks = [
+    { href: '/admin', icon: <FiBarChart2 />, label: 'Dashboard' },
+    { href: '/admin/users', icon: <FiUsers />, label: 'Users' },
+    { href: '/admin/tasks', icon: <FiCheckSquare />, label: 'Tasks' },
+    { href: '/admin/bids', icon: <FiFileText />, label: 'Bids' },
+    { href: '/admin/reports', icon: <FiAlertTriangle />, label: 'Reports' },
+  ];
+
   const userLinks = [
     { href: '/dashboard', icon: <FiHome />, label: 'Dashboard' },
     { href: '/dashboard/tasks/new', icon: <FiPlus />, label: 'Post a Task' },
     { href: '/dashboard/my-tasks', icon: <FiList />, label: 'My Tasks' },
-    { href: '/dashboard/notifications', icon: <FiFileText />, label: 'Notifications' },
+    { href: '/dashboard/notifications', icon: <FiBell />, label: 'Notifications' },
     { href: '/dashboard/profile', icon: <FiUser />, label: 'Profile' },
   ];
 
@@ -49,15 +57,8 @@ export default function DashboardLayout({ children }) {
     { href: '/tasks', icon: <FiBriefcase />, label: 'Browse Tasks' },
     { href: '/dashboard/my-bids', icon: <FiFileText />, label: 'My Bids' },
     { href: '/dashboard/assigned-tasks', icon: <FiCheckSquare />, label: 'Assigned Tasks' },
-    { href: '/dashboard/notifications', icon: <FiFileText />, label: 'Notifications' },
+    { href: '/dashboard/notifications', icon: <FiBell />, label: 'Notifications' },
     { href: '/dashboard/profile', icon: <FiUser />, label: 'Profile' },
-  ];
-
-  const adminLinks = [
-    { href: '/admin', icon: <FiBarChart2 />, label: 'Dashboard' },
-    { href: '/admin/users', icon: <FiUsers />, label: 'Users' },
-    { href: '/admin/tasks', icon: <FiCheckSquare />, label: 'Tasks' },
-    { href: '/admin/bids', icon: <FiFileText />, label: 'Bids' },
   ];
 
   const links = isAdmin ? adminLinks : isTasker ? taskerLinks : userLinks;

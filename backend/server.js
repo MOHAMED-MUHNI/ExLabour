@@ -44,6 +44,8 @@ app.use('/api/bids', require('./routes/bidRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // Global error handler
 app.use((err, req, res, next) => {

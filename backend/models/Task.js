@@ -78,6 +78,11 @@ const taskSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  paymentStatus: {
+    type: String,
+    enum: ['unpaid', 'escrowed', 'released'],
+    default: 'unpaid',
+  },
 }, {
   timestamps: true,
 });
